@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Nagwa Test</string>
+    <string name="file_icon">File Icon</string>
+    <string name="download_button">Download</string>
 </resources>
