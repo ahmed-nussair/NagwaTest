@@ -1,9 +1,12 @@
-package com.nussair.nagwatest.view.adapters
+package com.nussair.myapplication.view.adapters
 
+import android.app.Activity
 import android.app.DownloadManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,21 +15,25 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.nussair.nagwatest.R
-import com.nussair.nagwatest.view.interfaces.FileDownloader
 
 class FilesAdapter(
     private val context: Context,
-    private val filesList: List<Map<String, Any>>,
-    private val fileDownloader: FileDownloader
+    private val filesList: List<Map<String, Any>>
 ) : RecyclerView.Adapter<FilesAdapter.FilesViewHolder>() {
 
     class FilesViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val fileNameTextView: TextView = itemView.findViewById(R.id.fileNameTextView)
         val fileIconImageView: ImageView = itemView.findViewById(R.id.fileIconImageView)
         val downloadButton: Button = itemView.findViewById(R.id.downloadButton)
+        val downloadProgress: LinearProgressIndicator = itemView.findViewById(R.id.downloadProgress)
+        val progressPercentageTextView: TextView =
+            itemView.findViewById(R.id.progressPercentageTextView)
+        val downloadedImageView: ImageView = itemView.findViewById(R.id.downloadedImageView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FilesViewHolder {
@@ -50,6 +57,12 @@ class FilesAdapter(
 
         holder.downloadButton.setOnClickListener {
             run {
+
+                holder.downloadButton.visibility = View.GONE
+                holder.downloadProgress.visibility = View.VISIBLE
+                holder.progressPercentageTextView.visibility = View.VISIBLE
+                holder.progressPercentageTextView.text = "0%"
+
                 val url = filesList[position]["url"].toString()
                 val request = DownloadManager.Request(Uri.parse(url))
 
@@ -61,12 +74,24 @@ class FilesAdapter(
                 request.setTitle("download picsArt")
                 request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, title)
 
-
                 val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
 
-                val downloadId = manager.enqueue(request)
+                assert(
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    )
+                            != PackageManager.PERMISSION_GRANTED
+                )
 
-//        val mProgressBar = findViewById<View>(R.id.progressBar1) as ProgressBar
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    (context as Activity).requestPermissions(
+                        arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                        0
+                    )
+                }
+
+                val downloadId = manager.enqueue(request)
 
                 Thread {
                     var downloading = true
@@ -76,28 +101,35 @@ class FilesAdapter(
                         q.setFilterById(downloadId)
                         val cursor: Cursor = manager.query(q)
                         cursor.moveToFirst()
-                        val bytes_downloaded: Int = cursor.getInt(
+                        val bytesDownloaded: Int = cursor.getInt(
                             cursor
                                 .getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
                         )
-                        val bytes_total: Int =
+                        val bytesTotal: Int =
                             cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
                         if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
                             downloading = false
                             Log.d("Nussair", "Downloaded Successfully.")
+                            holder.downloadedImageView.visibility = View.VISIBLE
+                            holder.downloadProgress.visibility = View.GONE
+                            holder.progressPercentageTextView.visibility = View.GONE
                         }
-                        val dl_progress = (bytes_downloaded * 100L / bytes_total).toInt()
-                        Log.d("Nussair", "downloadFile: $dl_progress")
+                        val downloadProgress = (bytesDownloaded * 100L / bytesTotal).toInt()
+                        Log.d("Nussair", "downloadFile: $downloadProgress")
 
-
-//                        runOnUiThread {
-//                            linearProgressIndicator.progress = dl_progress
-//                            val value = "$dl_progress%"
-//                            percentageTextView.text = value
-//                        }
+                        (context as Activity).runOnUiThread {
+                            holder.downloadProgress.progress = downloadProgress
+                            val value = "$downloadProgress%"
+                            holder.progressPercentageTextView.text = value
+                        }
                         cursor.close()
                     }
                 }.start()
+//                try {
+//
+//                } catch (e : Exception) {
+//                    Toast.makeText(context, "Error Downloading The File.", Toast.LENGTH_LONG).show()
+//                }
             }
         }
     }

@@ -37,6 +37,28 @@
                 android:layout_height="wrap_content"
                 android:text="@string/download_button"
                 android:textSize="@dimen/_10ssp" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/downloadProgress"
+                android:layout_width="@dimen/_150sdp"
+                android:layout_height="@dimen/_50sdp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/progressPercentageTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/_10ssp"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/downloadedImageView"
+                android:layout_width="@dimen/_30sdp"
+                android:layout_height="@dimen/_30sdp"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/downloaded"
+                android:src="@drawable/downloaded"
+                android:visibility="gone" />
         </LinearLayout>
 
     </LinearLayout>

@@ -1,5 +1,6 @@
 package com.nussair.nagwatest.mvvm
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,9 +13,10 @@ import io.reactivex.schedulers.Schedulers
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Inject
 
 
-class FilesViewModel : ViewModel() {
+class FilesViewModel @Inject constructor() : ViewModel() {
 
     private val filesList: MutableLiveData<List<FileItem>> = MutableLiveData<List<FileItem>>()
 
@@ -42,7 +44,11 @@ class FilesViewModel : ViewModel() {
             .observeOn(AndroidSchedulers.mainThread())
 
         disposable =
-            observable.subscribe({ files -> filesList.value = files }) { e -> Log.e("Nussair", "") }
+            observable.subscribe({ files ->
+                run {
+                    filesList.value = files
+                }
+            }) { run { Log.e("Nussair", "Something Error") } }
     }
 
     override fun onCleared() {

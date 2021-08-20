@@ -2,4 +2,6 @@
     <string name="app_name">Nagwa Test</string>
     <string name="file_icon">File Icon</string>
     <string name="download_button">Download</string>
+    <string name="error_loading_files">Error Loading Files</string>
+    <string name="downloaded">Downloaded</string>
 </resources>
